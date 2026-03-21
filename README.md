@@ -24,13 +24,6 @@ First, ensure you have [Node.js](https://nodejs.org/) installed on your machine.
    ```
 3. Open your browser and navigate to `http://localhost:5173/`
 
-## Assignment Checklist Completed:
-- [x] Fetch Minimum 100 images from Picsum.
-- [x] No freezing or lagging when scrolling via **Virtualization**.
-- [x] Clicking an image opens full-screen preview.
-- [x] Download button on each image explicitly utilizing the Canvas API to draw text 'Celebrare'.
-- [x] Watermark processing is decoupled to a **Web Worker**.
-- [x] "Select All" functionality activating an intuitive action tray for batch downloads.
 
 ## Tech Stack
 - **React.js 18**
