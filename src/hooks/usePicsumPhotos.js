@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { getImagesFromDB, saveImagesToDB } from '../utils/imageIdIndexedDb';
 
 export function usePicsumPhotos(limit = 200) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [fromCache, setFromCache] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -11,7 +13,20 @@ export function usePicsumPhotos(limit = 200) {
     async function fetchImages() {
       try {
         setLoading(true);
-        // Picsum photos API
+        
+        // 1. Try to load from IndexedDB first
+        const cachedImages = await getImagesFromDB();
+        
+        if (cachedImages && cachedImages.length > 0) {
+          if (mounted) {
+            setImages(cachedImages);
+            setFromCache(true);
+            setLoading(false);
+          }
+          return; // Exit early since we loaded from cache
+        }
+        
+        // 2. Fetch from network
         const response = await fetch(`https://picsum.photos/v2/list?page=1&limit=${limit}`);
         if (!response.ok) throw new Error('Failed to fetch images');
         const data = await response.json();
@@ -24,8 +39,12 @@ export function usePicsumPhotos(limit = 200) {
             downloadUrl: item.download_url,
             author: item.author,
           }));
+          
           setImages(formatted);
           setError(null);
+          
+          // 3. Save to IndexedDB asynchronously
+          saveImagesToDB(formatted);
         }
       } catch (err) {
         if (mounted) {
@@ -45,5 +64,5 @@ export function usePicsumPhotos(limit = 200) {
     };
   }, [limit]);
 
-  return { images, loading, error };
+  return { images, loading, error, fromCache };
 }

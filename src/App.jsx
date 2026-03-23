@@ -1,17 +1,45 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { DownloadCloud, CheckSquare, Image as ImageIcon, X } from 'lucide-react';
+import { DownloadCloud, CheckSquare, Image as ImageIcon, X, Zap } from 'lucide-react';
+import { getCachedPreview, setCachedPreview } from './utils/previewImageCache';
 import { usePicsumPhotos } from './hooks/usePicsumPhotos';
 import VirtualGallery from './components/VirtualGallery';
 import CanvasImage from './components/CanvasImage';
 import { applyWatermarkMainThread } from './utils/watermarkShared';
 
 function App() {
-  const { images, loading, error } = usePicsumPhotos(200);
+  const { images, loading, error, fromCache } = usePicsumPhotos(200);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [previewImage, setPreviewImage] = useState(null);
+  const [previewSrc, setPreviewSrc] = useState(null);
   const [processingState, setProcessingState] = useState({ isProcessing: false, progress: 0, total: 0 });
   
   const workerRef = useRef(null);
+  
+  // When previewImage changes, load from cache or decode and cache
+  useEffect(() => {
+    if (!previewImage) {
+      setPreviewSrc(null);
+      return;
+    }
+    
+    const url = previewImage.downloadUrl || previewImage.url;
+    const cached = getCachedPreview(url);
+    
+    if (cached) {
+      setPreviewSrc(url);
+    } else {
+      setPreviewSrc(null); // Clear previous
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = url;
+      img.decode().then(() => {
+        setCachedPreview(url, true);
+        setPreviewSrc(url);
+      }).catch(() => {
+        setPreviewSrc(url); // Fallback
+      });
+    }
+  }, [previewImage]);
   
   // Initialize worker
   useEffect(() => {
@@ -146,7 +174,14 @@ function App() {
     <div className="app-container">
       {/* Header */}
       <header className="app-header glass-panel">
-        <h1 className="app-title">Celebrare</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <h1 className="app-title">Celebrare</h1>
+          {fromCache && (
+            <span className="cache-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', padding: '0.25rem 0.6rem', background: 'rgba(46, 204, 113, 0.15)', color: '#2ecc71', borderRadius: '12px', border: '1px solid rgba(46, 204, 113, 0.3)', fontWeight: 500 }}>
+              <Zap size={14} /> Loaded from Cache
+            </span>
+          )}
+        </div>
         <div className="header-actions">
           {images.length > 0 && (
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500 }}>
@@ -217,12 +252,16 @@ function App() {
             <X size={32} />
           </button>
           <div className="fullscreen-content" onClick={(e) => e.stopPropagation()}>
-            <img 
-              src={previewImage.downloadUrl || previewImage.url} 
-              alt="Preview" 
-              className="fullscreen-image" 
-              crossOrigin="anonymous"
-            />
+            {previewSrc ? (
+              <img 
+                src={previewSrc} 
+                alt="Preview" 
+                className="fullscreen-image" 
+                crossOrigin="anonymous"
+              />
+            ) : (
+              <div className="loading-spinner" style={{ width: '40px', height: '40px' }} />
+            )}
           </div>
         </div>
       )}

@@ -1,0 +1,7 @@
+Performance Improvements and Caching Strategy:
+
+1. Network Latency Offset (IndexedDB): We implemented IndexedDB (imageIdIndexedDb.js) to store gallery metadata persistently. Unlike localStorage, IndexedDB handles structured objects efficiently and operates asynchronously without blocking the main thread. On re-visits, metadata is loaded instantly from disk before network requests trigger, allowing immediate UI hydration.
+
+2. Zero-Flicker Virtualization (In-Memory Cache): Virtualized lists normally cause images to flicker when scrolling back up because DOM nodes are destroyed. We solved this with an in-memory Map (`imageCache.js`). By intercepting image URLs and awaiting `img.decode()` before rendering, we guarantee the image is fully parsed. Subsequent scroll-ups bypass the skeleton shimmer state entirely.
+
+3. Instant Previews: (previewImageCache.js) operates similarly, holding high-resolution assets in memory so toggling the preview modal back-and-forth feels completely instantaneous.

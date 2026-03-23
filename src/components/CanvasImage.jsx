@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download, Maximize2 } from 'lucide-react';
+import { getCachedImage, setCachedImage } from '../utils/imageCache';
 
 export default function CanvasImage({ 
   item, 
@@ -10,6 +11,35 @@ export default function CanvasImage({
   onDownload 
 }) {
   const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const cachedImg = getCachedImage(item.url);
+    
+    if (cachedImg) {
+      setLoaded(true);
+    } else {
+      setLoaded(false);
+      
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = item.url;
+      
+      img.decode().then(() => {
+        setCachedImage(item.url, true);
+        if (isMounted) {
+          setLoaded(true);
+        }
+      }).catch(() => {
+        // Fallback
+        if (isMounted) {
+          setLoaded(true);
+        }
+      });
+    }
+    
+    return () => { isMounted = false; };
+  }, [item.url]);
 
   return (
     <div className={`image-card ${selected ? 'selected' : ''}`} style={style}>
