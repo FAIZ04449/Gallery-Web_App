@@ -5,9 +5,11 @@ This repository contains a high-performance **Virtualized Image Gallery** built 
 ## Features
 
 - 🖼️ **True DOM Virtualization**: Capable of handling hundreds of images effortlessly. Only the images currently visible in your viewport are rendered into the DOM, maintaining 60 FPS scrolling and minimal memory footprint.
+- 🚀 **Zero-Flicker Virtualization (In-Memory Cache)**: Solves virtualization image flicker on scroll-up using an in-memory map. By awaiting `img.decode()` before rendering, we guarantee the image is fully parsed, bypassing the skeleton shimmer state entirely.
+- 💾 **Network Latency Offset (IndexedDB)**: Stores gallery metadata persistently via IndexedDB. Operates asynchronously without blocking the main thread, allowing immediate UI hydration on re-visits before network requests trigger.
 - ⚡ **Web Worker Offloading**: Image text watermarking ("Celebrare") is processed completely off the main thread using a Web Worker and the `OffscreenCanvas` API, meaning the UI never freezes during complex batch downloads.
 - ✨ **Premium Vanilla CSS UI**: A modern, sleek dark mode paired with glassmorphism, fluid interactive hover effects, and custom checkboxes designed natively without heavy external libraries like Tailwind.
-- 🔍 **Full-Screen Previews**: Instantly preview any image in an elegant full-screen modal interaction.
+- 🔍 **Instant Full-Screen Previews**: Instantly preview any image in an elegant full-screen modal interaction. Uses an in-memory cache for high-resolution assets so toggling the preview modal is completely instantaneous.
 - 📦 **Batch Selections & Downloading**: Select single or multiple images to process, displaying a live animated tray that guides the user through the process.
 
 ## Getting Started
